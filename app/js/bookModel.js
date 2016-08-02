@@ -28,18 +28,21 @@ module.exports.addBook = function(new_book,callback){
 		callback();
 	});
 
-	// books.forEach(function(book){
-	//     book = new bookModel(book);
-	// 	book.save(function(err){
-	// 		if(err)
-	// 			console.log(err);
-	// 		else
-	// 	    	console.log('Added');
-	// 	});
-	// });
-
 }
 
 module.exports.getBooks = function(callback, limit){
 	bookModel.find({},callback).limit(limit);
+}
+
+module.exports.getBook = function(id,callback){
+	bookModel.findById(id, callback);
+}
+
+module.exports.getBook = function(id,book,options,callback){
+	bookModel.update(id, book, options, callback);
+}
+
+module.exports.removeBook = function(id,callback){
+	const query = {_id: id};
+	bookModel.remove(query, callback);
 }

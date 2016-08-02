@@ -15,13 +15,20 @@ app.use(bodyParser.json());
 app.use(expressValidator());
 app.use(cors());
 
+
 function isValid(req,res)
 {
-	req.checkBody('author', 'Name of book').notEmpty().isInt();
+	req.checkBody('author', 'Name of book').notEmpty();
+	req.checkBody('title', 'Title of book').notEmpty();
+	req.checkBody('year', 'Year of book publish').notEmpty().isInt();
+
     const errors = req.validationErrors();
 
 	if (errors) {
-   	    res.status(200).send('There have been validation errors: ' + util.inspect(errors));
+   	    res.status(401).send('There have been validation errors: ' + util.inspect(errors));
+   	    return false;
+    }else {
+    	return true;
     }
 }
 
@@ -30,31 +37,36 @@ function isValid(req,res)
 mongoose.connect('mongodb://localhost/BookStore');
 const db = mongoose.connection;
 
-app.get('/', function(req, res){
-    res.sendFile(path_to_root + "index.html");
-});
-
-app.get('/app', function(req, res){
-    res.sendFile( path_to_root + "app.html");
-});
-
+//Get all books
 app.get('/books', function(req, res) {
 	bookModel.getBooks(function(err, books){
 		if(err){
 			throw err;
 		}
 		res.json(books);
-	},2);
-
+	});
 })
 
+//Get one book
+app.get('/book/:_id', function(req, res) {
+    const book_id = req.params._id;
+
+    bookModel.getBook(book_id,function(err, books){
+		if(err){
+			throw err;
+		}
+		res.status(200).send(books);
+	});
+});
+
+//Insert new book
 app.post('/book', function(req, res) {
 	const book = req.body;
 
 	if (isValid(req,res)) {
 	    bookModel.addBook(book,function(err){
 	    	if(err){
-				res.status(201).send({response: "Error"});
+				res.status(500).send({response: "Error"});
 	    	}
 			else{
 				res.status(201).send({response: "Added" ,book:(req.body)});
@@ -64,6 +76,30 @@ app.post('/book', function(req, res) {
 
 });
 
+//Update book
+app.put('/book/:_id', function(req, res) {
+    const book_id = req.params._id;
+    const book = req.body;
+
+    bookModel.getBook(book_id,book,{},function(err, book){
+		if(err){
+			throw err;
+		}
+		res.status(200).send(book);
+	});
+})
+
+//Delete book
+app.delete('/book/:_id',function(req, res){
+	const book_id = req.params._id;
+
+	bookModel.removeBook(book_id, function(err, book){
+		if(err){
+			throw err;
+		}
+		res.status(200).send(book);
+	});
+})
 
 
 module.exports = app; 
